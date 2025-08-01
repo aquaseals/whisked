@@ -5,24 +5,25 @@ let recipeBookBG
 
 let startIMG = '/assets/characters&icons/start.png'
 let sushiIMG = '/assets/meals/sushi.png'
+let chefIMG = '/assets/characters&icons/chef.png'
+
 
 let score = 0
 let hearts = 3
+let chefSpeed = 10
 
 let meals
 let numDropped = 0
 let ingredients
 
 let ingredientSpeed
-
-// following tutorial now
-let fallingObject
-let container
+let gameStarted = false
 
 
 // buttons
 let startButton
 let sushiButton
+let chefSprite
 
 function preload() {
   //load bgs
@@ -35,10 +36,33 @@ function setup() {
   createCanvas(1500, 800);
   console.log(width, height)
   startMenu()
-  startButton.mousePressed(showRecipeBook)
 }
 
 function draw() {
+  startButton.mousePressed(showRecipeBook)
+
+  if (chefSprite) {
+    if (kb.pressing('left') && chefSprite.x > 50) {
+    chefSprite.move(30, 'left', chefSpeed)
+  } else if (kb.pressing('right') && chefSprite.x < 1450) {
+    chefSprite.move(30, 'right', chefSpeed)
+  }
+  }
+
+  if (gameStarted) {
+    background(gameBG)
+
+      textSize(40)
+      text(`Score: ${score}`, 100, 50)
+
+      for (let i=0; i < ingredients.length; i++) {
+    if (ingredients[i].collides(chefSprite)) {
+      score++
+      ingredients.remove(ingredients[i])
+    }
+  }
+  }
+  
 }
 
 function startMenu() {
@@ -64,37 +88,59 @@ function showRecipeBook() {
 }
 
 function game() {
-  // ingredientSpeed = 2
-  // let ingredientStrings = ['/assets/ingredients/ingredients_png/grains_png/rice.png', '/assets/ingredients/ingredients_png/seaweeds_png/nori_toasted.png', '/assets/vegatables/veggies/carrot_orange.png', '/assets/vegatables/veggies/ginger.png']
-  // ingredients = new Group()
-  // for (let i=0; i<(ingredientStrings.length)*2; i++) {
-  //   let ingredient = new Sprite(-500, -500)
-  //   let ingredientIMG = loadImage(ingredientStrings[i])
-  //   ingredient.addImage('item', ingredientIMG)
-  //   ingredient.size(50, 50)
-  //   ingredients.add(ingredient)
-  // }
-  
-  // let dropping = setInterval(dropIngredient(numDropped), 1000)
-  // if (numDropped === ingredients.length) {
-  //   clearInterval(dropping)
-  // }
+  chef()
+  ingredientSpeed = 5
+  let ingredientStrings = ['assets/ingredients/ingredients_png/grains_png/rice.png', 'assets/ingredients/ingredients_png/seaweeds_png/nori_toasted.png', 'assets/vegatables/veggies/carrot_orange.png', 'assets/vegatables/veggies/ginger.png']
+  ingredients = new Group()
+  let totalDropping = ingredientStrings.length*3
+  for (let i=0; i<totalDropping; i++) {
+    let ingredient = new Sprite(-50, -50)
+    let index = floor(random(0, ingredientStrings.length))
+    let ingredientIMG = ingredientStrings[index]
+    ingredient.image = ingredientIMG
+    ingredient.scale *= 5
+    ingredients.add(ingredient)
+  }
 
-  // // switch (level) {
-  // //   case 1:
+  
+  let dropping = setInterval(function() {
+    dropIngredient()
+    print(numDropped,totalDropping)
+    if (numDropped === totalDropping) {
+    clearInterval(dropping)
+    end()
+  }
+  }, 1000)
+  
+  // switch (level) {
+  //   case 1:
     
-  // //   case 2:
-  // // }
+  //   case 2:
+  // }
   
   background(gameBG)
   sushiButton.position(-250, -250)
-  fallingObject = new Sprite(100, 0, 10)
+  gameStarted = true
 }
 
-function dropIngredient(n) {
-  let x = random(50, 750)
-  ingredients[n].y = 50
-  ingredients[n].x = x
-  ingredients[n].vel = ingredientSpeed
+function dropIngredient() {
+  let xCoor = floor(random(100, 750))
+  ingredients[numDropped].y = 50
+  ingredients[numDropped].x = xCoor
+  ingredients[numDropped].vel.x = 0
+  ingredients[numDropped].move(800, 'down', ingredientSpeed)
+  ingredients[numDropped].physics = DYNAMIC
   numDropped++
+  ingredientSpeed++
+}
+
+function chef() {
+  chefSprite = new Sprite(750, 700)
+  chefSprite.image = chefIMG
+  chefSprite.scale *= 0.5
+  chefSprite.physics = KINEMATIC
+}
+
+function end() {
+  
 }
