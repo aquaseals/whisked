@@ -6,23 +6,33 @@ let recipeBookBG
 let startIMG = '/assets/characters&icons/start.png'
 let sushiIMG = '/assets/meals/sushi.png'
 let chefIMG = '/assets/characters&icons/chef.png'
+let ratIMG = '/assets/characters&icons/rat.png'
+let ramenIMG = '/assets/meals/ramen.png'
+let cakeIMG = '/assets/meals/cake.png'
 
 
 let score = 0
 let hearts = 3
-let chefSpeed = 10
+let chefSpeed = 15
 
 let meals
 let numDropped = 0
+let totalDropping
 let ingredients
 
 let ingredientSpeed
 let gameStarted = false
 
+let numOfRats
+let ratIndex
+
+let difficulty = 0
 
 // buttons
 let startButton
 let sushiButton
+let cakeButton
+let ramenButton
 let chefSprite
 
 function preload() {
@@ -57,8 +67,17 @@ function draw() {
 
       for (let i=0; i < ingredients.length; i++) {
     if (ingredients[i].collides(chefSprite)) {
-      score++
-      ingredients.remove(ingredients[i])
+      ingredients[i].x = -1*(random(200, 1000))
+      ingredients[i].y = -1*(random(200, 1000))
+      if (ratIndex.includes(i)) {
+        score--
+      } else {
+        score++
+      }
+      
+    } else if (ingredients[i].y > 750) {
+      ingredients[i].x = -1*(random(200, 1000))
+      ingredients[i].y = -1*(random(200, 1000))
     }
   }
   }
@@ -84,39 +103,55 @@ function showRecipeBook() {
   sushiButton = createImg(sushiIMG, 'sushi button')
   sushiButton.size(200, 200)
   sushiButton.position(width/4, height*0.4)
-  sushiButton.mousePressed(game)
+  sushiButton.mousePressed(function() {
+    difficulty = 1
+    game()
+  })
 }
 
 function game() {
   chef()
-  ingredientSpeed = 5
+  // switch (difficulty) {
+  //   case 1:
+    
+  //   case 2:
+    
+  //   case 3:
+  // }
+  ingredientSpeed = 10
   let ingredientStrings = ['assets/ingredients/ingredients_png/grains_png/rice.png', 'assets/ingredients/ingredients_png/seaweeds_png/nori_toasted.png', 'assets/vegatables/veggies/carrot_orange.png', 'assets/vegatables/veggies/ginger.png']
-  ingredients = new Group()
-  let totalDropping = ingredientStrings.length*3
+  numOfRats = 5
+  ingredients = []
+  ratIndex = []
+  totalDropping = ingredientStrings.length*3 + numOfRats
   for (let i=0; i<totalDropping; i++) {
-    let ingredient = new Sprite(-50, -50)
+    let ingredient = new Sprite(-50-(i*5), -50)
     let index = floor(random(0, ingredientStrings.length))
     let ingredientIMG = ingredientStrings[index]
     ingredient.image = ingredientIMG
     ingredient.scale *= 5
-    ingredients.add(ingredient)
+    ingredients.push(ingredient)
+  }
+  //adding rats at random positions
+  for (let i=0; i<numOfRats; i++) {
+    let rat = new Sprite(-50-(i*5), -50)
+    let index = floor(random(0, ingredients.length+1))
+    ratIndex.push(index)
+    rat.image = ratIMG
+    rat.scale *= 0.45
+    ingredients.splice(index, 1, rat)
+    print(rat)
   }
 
   
   let dropping = setInterval(function() {
-    dropIngredient()
-    print(numDropped,totalDropping)
+    print(numDropped,totalDropping, ingredients.length)
     if (numDropped === totalDropping) {
     clearInterval(dropping)
-    end()
+  } else {
+    dropIngredient()
   }
   }, 1000)
-  
-  // switch (level) {
-  //   case 1:
-    
-  //   case 2:
-  // }
   
   background(gameBG)
   sushiButton.position(-250, -250)
@@ -124,10 +159,13 @@ function game() {
 }
 
 function dropIngredient() {
-  let xCoor = floor(random(100, 750))
+  let xCoor = floor(random(100, 1400))
   ingredients[numDropped].y = 50
   ingredients[numDropped].x = xCoor
   ingredients[numDropped].vel.x = 0
+  ingredients[numDropped].bounciness = 0;        // No bouncing
+  ingredients[numDropped].friction = 10;          // No friction
+  ingredients[numDropped].rotationLock = true;   // Prevent spinning
   ingredients[numDropped].move(800, 'down', ingredientSpeed)
   ingredients[numDropped].physics = DYNAMIC
   numDropped++
@@ -138,6 +176,7 @@ function chef() {
   chefSprite = new Sprite(750, 700)
   chefSprite.image = chefIMG
   chefSprite.scale *= 0.5
+  chefSprite.friction = 0; 
   chefSprite.physics = KINEMATIC
 }
 
