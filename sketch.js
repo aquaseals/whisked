@@ -19,13 +19,12 @@ let meals
 let numDropped = 0
 let totalDropping
 let ingredients
+let ingredientsGroup
 
 let ingredientSpeed
 let gameStarted = false
 
 let numOfRats
-let ratIndex
-
 let difficulty = 0
 
 // buttons
@@ -65,22 +64,22 @@ function draw() {
       textSize(40)
       text(`Score: ${score}`, 100, 50)
 
-      for (let i=0; i < ingredients.length; i++) {
-    if (ingredients[i].collides(chefSprite)) {
-      ingredients[i].x = -1*(random(200, 1000))
-      ingredients[i].y = -1*(random(200, 1000))
-      if (ratIndex.includes(i)) {
+    if (chefSprite.collides(ingredientsGroup)) {
+      if (ingredients[i].type === 'rat') {
         score--
+        print('you added a rat to the recipe EW')
       } else {
         score++
       }
+      ingredients[i].x = -1*(random(200, 1000))
+      ingredients[i].y = -1*(random(200, 1000))
       
     } else if (ingredients[i].y > 750) {
       ingredients[i].x = -1*(random(200, 1000))
       ingredients[i].y = -1*(random(200, 1000))
     }
   }
-  }
+  
   
 }
 
@@ -102,41 +101,71 @@ function showRecipeBook() {
   startButton.position(-100, -100)
   sushiButton = createImg(sushiIMG, 'sushi button')
   sushiButton.size(200, 200)
-  sushiButton.position(width/4, height*0.4)
+  sushiButton.position(475, height*0.25)
   sushiButton.mousePressed(function() {
     difficulty = 1
+    game()
+  })
+  cakeButton = createImg(cakeIMG, 'cake button')
+  cakeButton.size(200, 175)
+  cakeButton.position(275, height*0.4)
+  cakeButton.mousePressed(function() {
+    difficulty = 2
+    game()
+  })
+  ramenButton = createImg(ramenIMG, 'ramen button')
+  ramenButton.size(200, 200)
+  ramenButton.position(475, height*0.55)
+  ramenButton.mousePressed(function() {
+    difficulty = 3
     game()
   })
 }
 
 function game() {
   chef()
-  // switch (difficulty) {
-  //   case 1:
+  let ingredientStrings
+  switch (difficulty) {
+    case 1:
+    ingredientSpeed = 10
+    numOfRats = 5
+    ingredientStrings = ['assets/ingredients/ingredients_png/grains_png/rice.png', 'assets/ingredients/ingredients_png/seaweeds_png/nori_toasted.png', 'assets/vegatables/veggies/carrot_orange.png', 'assets/vegatables/veggies/ginger.png']
+    totalDropping = ingredientStrings.length*3 + numOfRats
+    break
     
-  //   case 2:
+    case 2:
+    ingredientSpeed = 12
+    chefSpeed = 20
+    numOfRats = 10
+    ingredientStrings = ['assets/ingredients/ingredients_png/grains_png/wheat.png', '/assets/ingredients/ingredients_png/eggs_png/whole_egg_02.png', '/assets/ingredients/ingredients_png/yogurt_and_milk_png/milk_bottled.png', '/assets/fruits+nuts/fruits_png/strawberry.png']
+    totalDropping = ingredientStrings.length*4 + numOfRats
+    break
     
-  //   case 3:
-  // }
-  ingredientSpeed = 10
-  let ingredientStrings = ['assets/ingredients/ingredients_png/grains_png/rice.png', 'assets/ingredients/ingredients_png/seaweeds_png/nori_toasted.png', 'assets/vegatables/veggies/carrot_orange.png', 'assets/vegatables/veggies/ginger.png']
-  numOfRats = 5
+    case 3:
+    ingredientSpeed = 14
+    chefSpeed = 25
+    numOfRats = 15
+    ingredientStrings = ['assets/ingredients/ingredients_png/grains_png/wheat.png', '/assets/ingredients/ingredients_png/eggs_png/whole_egg_01.png', 'assets/ingredients/ingredients_png/seaweeds_png/nori_toasted.png', 'assets/vegatables/veggies/ginger.png', 'assets/vegatables/veggies/carrot_orange.png', '/assets/vegatables/veggies/pepper_chili_red.png']
+    totalDropping = ingredientStrings.length*4 + numOfRats
+    break
+  }
   ingredients = []
-  ratIndex = []
-  totalDropping = ingredientStrings.length*3 + numOfRats
+  ingredientsGroup = new Group()
   for (let i=0; i<totalDropping; i++) {
     let ingredient = new Sprite(-50-(i*5), -50)
+    ingredient.type = 'ingredient'
     let index = floor(random(0, ingredientStrings.length))
     let ingredientIMG = ingredientStrings[index]
     ingredient.image = ingredientIMG
     ingredient.scale *= 5
     ingredients.push(ingredient)
+    ingredientsGroup.add(ingredient)
   }
   //adding rats at random positions
   for (let i=0; i<numOfRats; i++) {
     let rat = new Sprite(-50-(i*5), -50)
+    rat.type = 'rat'
     let index = floor(random(0, ingredients.length+1))
-    ratIndex.push(index)
     rat.image = ratIMG
     rat.scale *= 0.45
     ingredients.splice(index, 1, rat)
@@ -155,6 +184,8 @@ function game() {
   
   background(gameBG)
   sushiButton.position(-250, -250)
+  cakeButton.position(-350, -350)
+  ramenButton.position(-450, -450)
   gameStarted = true
 }
 
@@ -169,7 +200,7 @@ function dropIngredient() {
   ingredients[numDropped].move(800, 'down', ingredientSpeed)
   ingredients[numDropped].physics = DYNAMIC
   numDropped++
-  ingredientSpeed++
+  ingredientSpeed += 0.2
 }
 
 function chef() {
