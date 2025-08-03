@@ -2,6 +2,7 @@ let homeBG
 let gameBG
 let endBG
 let recipeBookBG
+let endCard
 
 let startIMG = '/assets/characters&icons/start.png'
 let sushiIMG = '/assets/meals/sushi.png'
@@ -12,6 +13,8 @@ let cakeIMG = '/assets/meals/cake.png'
 
 
 let score = 0
+let ratsCaught = 0
+let ingredientsCaught = 0
 let hearts = 3
 let chefSpeed = 15
 
@@ -39,6 +42,7 @@ function preload() {
   homeBG = loadImage('/assets/backgrounds/image.png')
   recipeBookBG = loadImage('/assets/backgrounds/recipeBook.png')
   gameBG = loadImage('/assets/backgrounds/gamebg.png')
+  endCard = loadImage('/assets/characters&icons/endCard.png')
 }
 
 function setup() {
@@ -64,22 +68,37 @@ function draw() {
       textSize(40)
       text(`Score: ${score}`, 100, 50)
 
-    if (chefSprite.collides(ingredientsGroup)) {
-      if (ingredients[i].type === 'rat') {
-        score--
-        print('you added a rat to the recipe EW')
-      } else {
-        score++
-      }
-      ingredients[i].x = -1*(random(200, 1000))
-      ingredients[i].y = -1*(random(200, 1000))
+
+
+      chefSprite.colliding(ingredientsGroup, (chef, ing) => {
+        if (ing.type === 'rat') {
+          score--
+          ratsCaught++
+          print('you added a rat to the recipe EW')
+        } else {
+          score++
+          ingredientsCaught++
+        }
+        ing.delete()
+      })
+
+  //     for (let i=0; i < ingredients.length; i++) {
+  //   if (ingredients[i].overlapping(chefSprite)) {
+  //     if (ingredients[i].type === 'rat') {
+  //       score--
+  //       print('you added a rat to the recipe EW')
+  //     } else {
+  //       score++
+  //     }
+  //     ingredients[i].x = -1*(random(200, 1000))
+  //     ingredients[i].y = -1*(random(200, 1000))
       
-    } else if (ingredients[i].y > 750) {
-      ingredients[i].x = -1*(random(200, 1000))
-      ingredients[i].y = -1*(random(200, 1000))
-    }
+  //   } else if (ingredients[i].y > 750) {
+  //     ingredients[i].x = -1*(random(200, 1000))
+  //     ingredients[i].y = -1*(random(200, 1000))
+  //   }
+  // }
   }
-  
   
 }
 
@@ -161,22 +180,25 @@ function game() {
     ingredients.push(ingredient)
     ingredientsGroup.add(ingredient)
   }
-  //adding rats at random positions
+  //adding rats then shuffling..because you can do that apparently??
   for (let i=0; i<numOfRats; i++) {
     let rat = new Sprite(-50-(i*5), -50)
     rat.type = 'rat'
-    let index = floor(random(0, ingredients.length+1))
     rat.image = ratIMG
     rat.scale *= 0.45
-    ingredients.splice(index, 1, rat)
+    let index = floor(random(0, ingredients.length+1))
+    ingredients.splice(index, 0, rat)
+    ingredientsGroup.add(rat)
     print(rat)
   }
+  shuffle(ingredients)
 
   
   let dropping = setInterval(function() {
     print(numDropped,totalDropping, ingredients.length)
-    if (numDropped === totalDropping) {
+    if (numDropped === ingredients.length) {
     clearInterval(dropping)
+    end()
   } else {
     dropIngredient()
   }
@@ -212,5 +234,27 @@ function chef() {
 }
 
 function end() {
-  
+  let ratPercent = (ratsCaught/numOfRats)*100
+  let ingredientPercent = (ingredientsCaught/(totalDropping-numOfRats))*100
+  let accuracyPercent = ingredientPercent-ratPercent
+  print(ratPercent)
+  print(ingredientPercent)
+  print(`you caught ${ingredientsCaught} ingredients and ${ratsCaught} rats. your is accuracy:`)
+  print(accuracyPercent)
+  ingredients = []
+  ingredientsGroup.delete()
+  chefSprite.delete()
+  image(endCard, 750, 400)
+  if (accuracyPercent <= 33.3 && accuracyPercent > 5) {
+    print(`1 star`)
+  }
+  if (accuracyPercent < 5) {
+    print(`0 star`)
+  }
+  if (accuracyPercent >= 33.3 && accuracyPercent <= 66.6) {
+    print(`2 stars`)
+  }
+  if (accuracyPercent >= 66.6) {
+    print(`3 stars`)
+  }
 }
