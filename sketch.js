@@ -3,6 +3,9 @@ let gameBG
 let endBG
 let recipeBookBG
 let endCard
+let chefIMG_TEMP
+let left
+let right
 
 let startIMG = '/assets/characters&icons/start.png'
 let sushiIMG = '/assets/meals/sushi.png'
@@ -35,7 +38,10 @@ let startButton
 let sushiButton
 let cakeButton
 let ramenButton
+
+
 let chefSprite
+let ByteBounce
 
 function preload() {
   //load bgs
@@ -43,11 +49,22 @@ function preload() {
   recipeBookBG = loadImage('/assets/backgrounds/recipeBook.png')
   gameBG = loadImage('/assets/backgrounds/gamebg.png')
   endCard = loadImage('/assets/characters&icons/endCard.png')
+
+  //load font
+  ByteBounce = loadFont('/assets/fonts/ByteBounce.ttf')
+
+  //instructions
+  chefIMG_TEMP = loadImage(chefIMG)
+  left = loadImage('/assets/characters&icons/left.png')
+  right = loadImage('/assets/characters&icons/right.png')
 }
 
 function setup() {
   createCanvas(1500, 800);
   console.log(width, height)
+  textFont(ByteBounce)
+  left.resize(84*1.5, 77*1.5)
+  right.resize(84*1.5, 77*1.5)
   startMenu()
 }
 
@@ -70,7 +87,7 @@ function draw() {
 
 
 
-      chefSprite.colliding(ingredientsGroup, (chef, ing) => {
+      chefSprite.collides(ingredientsGroup, (chef, ing) => {
         if (ing.type === 'rat') {
           score--
           ratsCaught++
@@ -104,12 +121,25 @@ function draw() {
 
 function startMenu() {
   background(homeBG)
-  textSize(100)
-  fill("white")
+  textSize(300)
+  fill(42, 56, 38)
   textAlign(CENTER)
-  text("whisked!", width/2, 0.2*height)
+  text("whisked!", width/2, 0.31*height)
+  text("whisked!", width*0.51, 0.31*height)
+  text("whisked!", width*0.49, 0.31*height)
+  textSize(270)
+  fill(235, 234, 199)
+  textAlign(CENTER)
+  text("whisked!", width/2, 0.3*height)
   startButton = createImg(startIMG, 'startbutton')
+  startButton.size(220, 100)
   startButton.position(width/2-100, 350)
+  textSize(150)
+
+  //instructions
+  image(chefIMG_TEMP, width/2-100, 500)
+  image(left, width/2-250, 570)
+  image(right, width/2+150, 570)
 }
 
 function showRecipeBook() {
@@ -171,7 +201,7 @@ function game() {
   ingredients = []
   ingredientsGroup = new Group()
   for (let i=0; i<totalDropping; i++) {
-    let ingredient = new Sprite(-50-(i*5), -50)
+    let ingredient = new Sprite(-500-(i*5), -50)
     ingredient.type = 'ingredient'
     let index = floor(random(0, ingredientStrings.length))
     let ingredientIMG = ingredientStrings[index]
@@ -217,9 +247,8 @@ function dropIngredient() {
   ingredients[numDropped].x = xCoor
   ingredients[numDropped].vel.x = 0
   ingredients[numDropped].bounciness = 0;        // No bouncing
-  ingredients[numDropped].friction = 10;          // No friction
   ingredients[numDropped].rotationLock = true;   // Prevent spinning
-  ingredients[numDropped].move(800, 'down', ingredientSpeed)
+  ingredients[numDropped].vel.y = ingredientSpeed 
   ingredients[numDropped].physics = DYNAMIC
   numDropped++
   ingredientSpeed += 0.2
@@ -234,17 +263,28 @@ function chef() {
 }
 
 function end() {
-  let ratPercent = (ratsCaught/numOfRats)*100
-  let ingredientPercent = (ingredientsCaught/(totalDropping-numOfRats))*100
-  let accuracyPercent = ingredientPercent-ratPercent
-  print(ratPercent)
-  print(ingredientPercent)
+  imageMode(CENTER)
+  let totalGoodIngredients = totalDropping - numOfRats;
+  let missedIngredients = totalGoodIngredients - ingredientsCaught;
+
+  let ratPenaltyWeight = 2;
+  let missPenaltyWeight = 1.5;
+
+  let weightedCorrect = ingredientsCaught;
+  let weightedIncorrect = (ratsCaught * ratPenaltyWeight) + (missedIngredients * missPenaltyWeight);
+
+  let accuracyPercent = 0;
+  if ((weightedCorrect + weightedIncorrect) > 0) {
+    accuracyPercent = (weightedCorrect / (weightedCorrect + weightedIncorrect)) * 100;
+  }
+  accuracyPercent = round(accuracyPercent);
   print(`you caught ${ingredientsCaught} ingredients and ${ratsCaught} rats. your is accuracy:`)
   print(accuracyPercent)
   ingredients = []
   ingredientsGroup.delete()
   chefSprite.delete()
   image(endCard, 750, 400)
+  text(``)
   if (accuracyPercent <= 33.3 && accuracyPercent > 5) {
     print(`1 star`)
   }
