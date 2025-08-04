@@ -17,6 +17,8 @@ let ramenIMG = '/assets/meals/ramen.png'
 let cakeIMG = '/assets/meals/cake.png'
 let questionIMG = '/assets/characters&icons/question.png'
 let xIMG = '/assets/characters&icons/x.png'
+let menuIMG = '/assets/characters&icons/menu.png'
+let againIMG = '/assets/characters&icons/again.png'
 
 
 let score = 0
@@ -44,6 +46,8 @@ let cakeButton
 let ramenButton
 let questionButton
 let xButton
+let againButton
+let menuButton
 
 
 let chefSprite
@@ -83,6 +87,10 @@ function draw() {
   startButton.mousePressed(showRecipeBook)
   questionButton.mousePressed(showInstructions)
   xButton.mousePressed(startMenu)
+  if (againButton && menuButton) {
+    againButton.mousePressed(game)
+    menuButton.mousePressed(startMenu)
+  }
 
   if (chefSprite) {
     if (kb.pressing('left') && chefSprite.x > 50) {
@@ -142,9 +150,8 @@ function showInstructions() {
 }
 
 function startMenu() {
-  if (xButton) {
-    xButton.position(-900, -900)
-  }
+  resetGameState()
+  imageMode(CORNER)
   background(homeBG)
   textSize(300)
   fill(42, 56, 38)
@@ -171,6 +178,7 @@ function startMenu() {
 }
 
 function showRecipeBook() {
+  imageMode(CORNER)
   if (questionButton) {
     questionButton.position(-40000, -40000)
   }
@@ -203,6 +211,8 @@ function showRecipeBook() {
 }
 
 function game() {
+  resetGameState()
+  imageMode(CORNER)
   chef()
   let ingredientStrings
   switch (difficulty) {
@@ -246,7 +256,10 @@ function game() {
     let rat = new Sprite(-5000-(i*5), -50)
     rat.type = 'rat'
     rat.image = ratIMG
-    rat.scale *= 0.45
+    rat.scale *= 0.5
+    rat.collider = 'rectangle'
+    rat.w = 80
+    rat.h = 80
     let index = floor(random(0, ingredients.length+1))
     ingredients.splice(index, 0, rat)
     ingredientsGroup.add(rat)
@@ -301,19 +314,15 @@ function chef() {
 function end() {
   imageMode(CENTER)
   gameStarted = false
-  let totalGoodIngredients = totalDropping - numOfRats;
-  let missedIngredients = totalGoodIngredients - ingredientsCaught;
-
-  let ratPenaltyWeight = 2;
-  let missPenaltyWeight = 1.5;
-
-  let weightedCorrect = ingredientsCaught;
-  let weightedIncorrect = (ratsCaught * ratPenaltyWeight) + (missedIngredients * missPenaltyWeight);
-
+  score = 0
+  lives = []
   let accuracyPercent = 0;
-  if ((weightedCorrect + weightedIncorrect) > 0) {
-    accuracyPercent = (weightedCorrect / (weightedCorrect + weightedIncorrect)) * 100;
+  let totalAttempts = ingredientsCaught + ratsCaught;
+
+  if (totalAttempts > 0) {
+    accuracyPercent = (score / totalAttempts) * 100;
   }
+
   accuracyPercent = round(accuracyPercent);
   print(`you caught ${ingredientsCaught} ingredients and ${ratsCaught} rats. your is accuracy:`)
   print(accuracyPercent)
@@ -331,17 +340,54 @@ function end() {
     numOfStars = 1
     customText = `I can taste the effort..\nand the garbage!`
   }
-  if (accuracyPercent >= 33.3 && accuracyPercent <= 66.6) {
+  if (accuracyPercent >= 33.3 && accuracyPercent <= 80.6) {
     numOfStars = 2
     customText = `Ok this is kinda yum`
   }
-  if (accuracyPercent >= 66.6) {
+  if (accuracyPercent >= 80.6) {
     numOfStars = 3
     customText = `MASTERCHEF GIMME 14\nOF 'EM RIGHT NOW`
   }
   textSize(55)
   text(`${customText}\nScore: ${score}`, 750, 300)
   for (let i=0; i<numOfStars; i++) {
-    image(starIMG, 700+(i*120), 500)
+    image(starIMG, 600+(i*120), 500)
   }
+  menuButton = createImg(menuIMG)
+  menuButton.size(75, 75)
+  againButton = createImg(againIMG)
+  againButton.size(75, 75)
+  menuButton.position(625, 600)
+  againButton.position(775, 600)
+}
+
+function resetGameState() {
+
+  clearInterval(dropping)
+
+
+  gameStarted = false
+  score = 0
+  ratsCaught = 0
+  ingredientsCaught = 0
+  numDropped = 0
+  //difficulty = 0
+  chefSpeed = 15
+  lives = []
+
+
+  if (ingredientsGroup) ingredientsGroup.removeAll()
+  if (chefSprite) {
+    chefSprite.remove()
+    chefSprite = null
+  }
+
+
+  if (sushiButton) sushiButton.position(-5000, -5000)
+  if (cakeButton) cakeButton.position(-5000, -5000)
+  if (ramenButton) ramenButton.position(-5000, -5000)
+
+
+  if (menuButton) menuButton.position(-5000, -5000)
+  if (againButton) againButton.position(-5000, -5000)
 }
