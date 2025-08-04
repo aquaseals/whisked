@@ -332,10 +332,6 @@ function chef() {
 
 function end() {
   imageMode(CENTER)
-  gameStarted = false
-  score = 0
-  lives = []
-
   // calculating accuracy out of 100
   let accuracyPercent = 0;
   let totalAttempts = ingredientsCaught + ratsCaught;
@@ -385,6 +381,10 @@ function end() {
   againButton.size(75, 75)
   menuButton.position(625, 600)
   againButton.position(775, 600)
+
+  gameStarted = false
+  score = 0
+  lives = []
 }
 
 function resetGameState() {
