@@ -1,14 +1,36 @@
+// backgrounds
 let homeBG
 let gameBG
 let endBG
 let recipeBookBG
+
+// game pieces/components
 let endCard
 let chefIMG_TEMP
 let left
 let right
 let heartIMG
 let starIMG
+let ingredients
+let chefSprite
 
+// variables + other info
+let score = 0
+let ratsCaught = 0
+let ingredientsCaught = 0
+let lives = []
+let chefSpeed = 15
+let meals
+let numDropped = 0
+let totalDropping
+let ingredientsGroup
+let ingredientSpeed
+let gameStarted = false
+let numOfRats
+let difficulty = 0
+let dropping
+
+// image paths
 let startIMG = '/assets/characters&icons/start.png'
 let sushiIMG = '/assets/meals/sushi.png'
 let chefIMG = '/assets/characters&icons/chef.png'
@@ -20,25 +42,6 @@ let xIMG = '/assets/characters&icons/x.png'
 let menuIMG = '/assets/characters&icons/menu.png'
 let againIMG = '/assets/characters&icons/again.png'
 
-
-let score = 0
-let ratsCaught = 0
-let ingredientsCaught = 0
-let lives = []
-let chefSpeed = 15
-
-let meals
-let numDropped = 0
-let totalDropping
-let ingredients
-let ingredientsGroup
-
-let ingredientSpeed
-let gameStarted = false
-
-let numOfRats
-let difficulty = 0
-
 // buttons
 let startButton
 let sushiButton
@@ -49,11 +52,8 @@ let xButton
 let againButton
 let menuButton
 
-
-let chefSprite
+// miscellaneous
 let ByteBounce
-
-let dropping
 
 function preload() {
   //load bgs
@@ -92,6 +92,7 @@ function draw() {
     menuButton.mousePressed(startMenu)
   }
 
+  // chef movement
   if (chefSprite) {
     if (kb.pressing('left') && chefSprite.x > 50) {
     chefSprite.move(30, 'left', chefSpeed)
@@ -100,16 +101,19 @@ function draw() {
   }
   }
 
+  // game logic
   if (gameStarted) {
     background(gameBG)
 
       textSize(40)
+      // score + lives
       text(`Score: ${score}`, 100, 50)
 
-        for (let n=0; n<lives.length; n++) {
-          image(heartIMG, 30+(n*80), 75)
-        }
+      for (let n=0; n<lives.length; n++) {
+        image(heartIMG, 30+(n*80), 75)
+      }
 
+      // collision detection
       chefSprite.overlapping(ingredientsGroup, (chef, ing) => {
         if (ing.type === 'rat') {
           if (score > 0) {
@@ -128,6 +132,7 @@ function draw() {
         ing.delete()
       })
 
+      // checking if player lost all lives
       if (lives.length === 0) {
         clearInterval(dropping)
         end()
@@ -143,7 +148,8 @@ function showInstructions() {
     xButton.position(1400, height-100)
     textSize(60)
     text(`1. Collect ALL the ingredients to cook your recipe\n2. Avoid the rats sneaking into the food\n 3. Get whisked away in the rush!`, 750, 200)
-    //instructions
+    
+    //controls
     image(chefIMG_TEMP, width/2-100, 500)
     image(left, width/2-250, 570)
     image(right, width/2+150, 570)
@@ -153,6 +159,8 @@ function startMenu() {
   resetGameState()
   imageMode(CORNER)
   background(homeBG)
+
+  // whisked title
   textSize(300)
   fill(42, 56, 38)
   textAlign(CENTER)
@@ -163,6 +171,7 @@ function startMenu() {
   fill(235, 234, 199)
   textAlign(CENTER)
   text("whisked!", width/2, 0.3*height)
+
   startButton = createImg(startIMG, 'startbutton')
   startButton.size(220, 100)
   startButton.position(width/2-100, 350)
@@ -187,6 +196,8 @@ function showRecipeBook() {
   fill("white")
   text("choose a recipe", width/2, height*0.1)
   startButton.position(-100, -100)
+
+  // setting difficulty based on recipe chosen
   sushiButton = createImg(sushiIMG, 'sushi button')
   sushiButton.size(200, 200)
   sushiButton.position(475, height*0.25)
@@ -213,8 +224,12 @@ function showRecipeBook() {
 function game() {
   resetGameState()
   imageMode(CORNER)
-  chef()
+
+  chef() // setting up chef player
+
   let ingredientStrings
+
+  // changing game vars according to difficulty
   switch (difficulty) {
     case 1:
     ingredientSpeed = 10
@@ -239,6 +254,8 @@ function game() {
     totalDropping = ingredientStrings.length*4 + numOfRats
     break
   }
+
+  // setting up ingredients + rats array
   ingredients = []
   ingredientsGroup = new Group()
   for (let i=0; i<totalDropping; i++) {
@@ -267,9 +284,10 @@ function game() {
   }
   shuffle(ingredients)
 
-  
+  // dropping ingredients + rats every 1 second
   dropping = setInterval(function() {
     print(numDropped,totalDropping, ingredients.length)
+    // if all ingredients are dropped, stop interval
     if (numDropped === ingredients.length) {
     clearInterval(dropping)
     end()
@@ -278,6 +296,7 @@ function game() {
   }
   }, 1000)
 
+  // inital lives set up
   for (let n=0; n<3; n++) {
           let heart = image(heartIMG, 50+(n*90), 100)
           lives.push(heart)
@@ -287,7 +306,7 @@ function game() {
   sushiButton.position(-250, -250)
   cakeButton.position(-350, -350)
   ramenButton.position(-450, -450)
-  gameStarted = true
+  gameStarted = true // starts game logic in draw()
 }
 
 function dropIngredient() {
@@ -316,22 +335,29 @@ function end() {
   gameStarted = false
   score = 0
   lives = []
+
+  // calculating accuracy out of 100
   let accuracyPercent = 0;
   let totalAttempts = ingredientsCaught + ratsCaught;
 
   if (totalAttempts > 0) {
     accuracyPercent = (score / totalAttempts) * 100;
   }
-
   accuracyPercent = round(accuracyPercent);
+
   print(`you caught ${ingredientsCaught} ingredients and ${ratsCaught} rats. your is accuracy:`)
   print(accuracyPercent)
+
+  // tried to delete things but idk if it works..
   ingredients = []
   ingredientsGroup.delete()
   chefSprite.delete() //not working??
+
+  
   let numOfStars = 0
   let customText = ``
   image(endCard, 750, 400)
+  // custom response + # of stars based on accuracy percent
   if (accuracyPercent <= 33.3 && accuracyPercent > 0) {
     numOfStars = 0
     customText = `Ew..This tastes like\nrats and garbage`
@@ -375,7 +401,6 @@ function resetGameState() {
   chefSpeed = 15
   lives = []
 
-
   if (ingredientsGroup) ingredientsGroup.removeAll()
   if (chefSprite) {
     chefSprite.remove()
@@ -386,7 +411,6 @@ function resetGameState() {
   if (sushiButton) sushiButton.position(-5000, -5000)
   if (cakeButton) cakeButton.position(-5000, -5000)
   if (ramenButton) ramenButton.position(-5000, -5000)
-
 
   if (menuButton) menuButton.position(-5000, -5000)
   if (againButton) againButton.position(-5000, -5000)
