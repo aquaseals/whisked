@@ -6,6 +6,8 @@ let endCard
 let chefIMG_TEMP
 let left
 let right
+let heartIMG
+let starIMG
 
 let startIMG = '/assets/characters&icons/start.png'
 let sushiIMG = '/assets/meals/sushi.png'
@@ -13,12 +15,14 @@ let chefIMG = '/assets/characters&icons/chef.png'
 let ratIMG = '/assets/characters&icons/rat.png'
 let ramenIMG = '/assets/meals/ramen.png'
 let cakeIMG = '/assets/meals/cake.png'
+let questionIMG = '/assets/characters&icons/question.png'
+let xIMG = '/assets/characters&icons/x.png'
 
 
 let score = 0
 let ratsCaught = 0
 let ingredientsCaught = 0
-let hearts = 3
+let lives = []
 let chefSpeed = 15
 
 let meals
@@ -38,10 +42,14 @@ let startButton
 let sushiButton
 let cakeButton
 let ramenButton
+let questionButton
+let xButton
 
 
 let chefSprite
 let ByteBounce
+
+let dropping
 
 function preload() {
   //load bgs
@@ -57,6 +65,9 @@ function preload() {
   chefIMG_TEMP = loadImage(chefIMG)
   left = loadImage('/assets/characters&icons/left.png')
   right = loadImage('/assets/characters&icons/right.png')
+
+  starIMG = loadImage('/assets/characters&icons/star.png')
+  heartIMG = loadImage('/assets/characters&icons/heart.png')
 }
 
 function setup() {
@@ -70,6 +81,8 @@ function setup() {
 
 function draw() {
   startButton.mousePressed(showRecipeBook)
+  questionButton.mousePressed(showInstructions)
+  xButton.mousePressed(startMenu)
 
   if (chefSprite) {
     if (kb.pressing('left') && chefSprite.x > 50) {
@@ -85,12 +98,20 @@ function draw() {
       textSize(40)
       text(`Score: ${score}`, 100, 50)
 
+        for (let n=0; n<lives.length; n++) {
+          image(heartIMG, 30+(n*80), 75)
+        }
 
-
-      chefSprite.collides(ingredientsGroup, (chef, ing) => {
+      chefSprite.overlapping(ingredientsGroup, (chef, ing) => {
         if (ing.type === 'rat') {
-          score--
-          ratsCaught++
+          if (score > 0) {
+            score--
+            ratsCaught++
+          } else if (score === 0) {
+            lives.pop()
+            print(`you lost a life!`)
+          }
+          
           print('you added a rat to the recipe EW')
         } else {
           score++
@@ -99,27 +120,31 @@ function draw() {
         ing.delete()
       })
 
-  //     for (let i=0; i < ingredients.length; i++) {
-  //   if (ingredients[i].overlapping(chefSprite)) {
-  //     if (ingredients[i].type === 'rat') {
-  //       score--
-  //       print('you added a rat to the recipe EW')
-  //     } else {
-  //       score++
-  //     }
-  //     ingredients[i].x = -1*(random(200, 1000))
-  //     ingredients[i].y = -1*(random(200, 1000))
-      
-  //   } else if (ingredients[i].y > 750) {
-  //     ingredients[i].x = -1*(random(200, 1000))
-  //     ingredients[i].y = -1*(random(200, 1000))
-  //   }
-  // }
+      if (lives.length === 0) {
+        clearInterval(dropping)
+        end()
+      }
   }
   
 }
 
+function showInstructions() {
+    background(gameBG)
+    startButton.position(-500, -500)
+    questionButton.position(-400, -400)
+    xButton.position(1400, height-100)
+    textSize(60)
+    text(`1. Collect ALL the ingredients to cook your recipe\n2. Avoid the rats sneaking into the food\n 3. Get whisked away in the rush!`, 750, 200)
+    //instructions
+    image(chefIMG_TEMP, width/2-100, 500)
+    image(left, width/2-250, 570)
+    image(right, width/2+150, 570)
+}
+
 function startMenu() {
+  if (xButton) {
+    xButton.position(-900, -900)
+  }
   background(homeBG)
   textSize(300)
   fill(42, 56, 38)
@@ -136,13 +161,19 @@ function startMenu() {
   startButton.position(width/2-100, 350)
   textSize(150)
 
-  //instructions
-  image(chefIMG_TEMP, width/2-100, 500)
-  image(left, width/2-250, 570)
-  image(right, width/2+150, 570)
+  questionButton = createImg(questionIMG, 'instructions')
+  questionButton.size(75, 75)
+  questionButton.position(30, height-100)
+
+  xButton = createImg(xIMG, 'instructions')
+  xButton.size(75, 75)
+  xButton.position(-300, -300)
 }
 
 function showRecipeBook() {
+  if (questionButton) {
+    questionButton.position(-40000, -40000)
+  }
   background(recipeBookBG)
   textSize(100)
   fill("white")
@@ -201,7 +232,7 @@ function game() {
   ingredients = []
   ingredientsGroup = new Group()
   for (let i=0; i<totalDropping; i++) {
-    let ingredient = new Sprite(-500-(i*5), -50)
+    let ingredient = new Sprite(-5000-(i*5), -50)
     ingredient.type = 'ingredient'
     let index = floor(random(0, ingredientStrings.length))
     let ingredientIMG = ingredientStrings[index]
@@ -212,7 +243,7 @@ function game() {
   }
   //adding rats then shuffling..because you can do that apparently??
   for (let i=0; i<numOfRats; i++) {
-    let rat = new Sprite(-50-(i*5), -50)
+    let rat = new Sprite(-5000-(i*5), -50)
     rat.type = 'rat'
     rat.image = ratIMG
     rat.scale *= 0.45
@@ -224,7 +255,7 @@ function game() {
   shuffle(ingredients)
 
   
-  let dropping = setInterval(function() {
+  dropping = setInterval(function() {
     print(numDropped,totalDropping, ingredients.length)
     if (numDropped === ingredients.length) {
     clearInterval(dropping)
@@ -233,7 +264,12 @@ function game() {
     dropIngredient()
   }
   }, 1000)
-  
+
+  for (let n=0; n<3; n++) {
+          let heart = image(heartIMG, 50+(n*90), 100)
+          lives.push(heart)
+  }
+
   background(gameBG)
   sushiButton.position(-250, -250)
   cakeButton.position(-350, -350)
@@ -264,6 +300,7 @@ function chef() {
 
 function end() {
   imageMode(CENTER)
+  gameStarted = false
   let totalGoodIngredients = totalDropping - numOfRats;
   let missedIngredients = totalGoodIngredients - ingredientsCaught;
 
@@ -282,19 +319,29 @@ function end() {
   print(accuracyPercent)
   ingredients = []
   ingredientsGroup.delete()
-  chefSprite.delete()
+  chefSprite.delete() //not working??
+  let numOfStars = 0
+  let customText = ``
   image(endCard, 750, 400)
-  text(``)
-  if (accuracyPercent <= 33.3 && accuracyPercent > 5) {
-    print(`1 star`)
+  if (accuracyPercent <= 33.3 && accuracyPercent > 0) {
+    numOfStars = 0
+    customText = `Ew..This tastes like\nrats and garbage`
   }
   if (accuracyPercent < 5) {
-    print(`0 star`)
+    numOfStars = 1
+    customText = `I can taste the effort..\nand the garbage!`
   }
   if (accuracyPercent >= 33.3 && accuracyPercent <= 66.6) {
-    print(`2 stars`)
+    numOfStars = 2
+    customText = `Ok this is kinda yum`
   }
   if (accuracyPercent >= 66.6) {
-    print(`3 stars`)
+    numOfStars = 3
+    customText = `MASTERCHEF GIMME 14\nOF 'EM RIGHT NOW`
+  }
+  textSize(55)
+  text(`${customText}\nScore: ${score}`, 750, 300)
+  for (let i=0; i<numOfStars; i++) {
+    image(starIMG, 700+(i*120), 500)
   }
 }
